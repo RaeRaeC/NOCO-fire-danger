@@ -1,0 +1,1334 @@
+{
+ "_about": "Starting points for the FDOP Workbench and the popup levels, built from site/thresholds/FDRA_thresholds.xlsx. Breakpoint = top of its class. Optional \"weights\": {stationId: weight} gives a weighted SIG; stations without a weight count 1.",
+ "NOCO-BR": {
+  "source": "Northern Colorado 2026 FDOP workbook v1.2 (2026-06-06), Fire Danger Decision Matrix and FDRA analysis tabs",
+  "stations": [
+   50106,
+   482011,
+   51608
+  ],
+  "fm": "Z",
+  "idx": "erc",
+  "season": [
+   "01-01",
+   "12-31"
+  ],
+  "calib": [
+   2012,
+   2022
+  ],
+  "breaks": {
+   "erc": [
+    24.9,
+    71.9,
+    94.9,
+    107.9
+   ],
+   "bi": [
+    49.9,
+    89.9,
+    111.9,
+    139.9
+   ]
+  },
+  "classes": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5"
+  ],
+  "large": 50,
+  "mfd": 2,
+  "tools": [
+   {
+    "label": "ERC-Z class (matrix rows)",
+    "idx": "erc",
+    "fm": "Z",
+    "breaks": [
+     24.9,
+     71.9,
+     94.9,
+     107.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 4
+   },
+   {
+    "label": "BI-Z class (matrix columns)",
+    "idx": "bi",
+    "fm": "Z",
+    "breaks": [
+     49.9,
+     89.9,
+     111.9,
+     139.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 5
+   }
+  ],
+  "matrix_tools": [
+   {
+    "type": "matrix",
+    "label": "Adjective rating & preparedness (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      24.9,
+      71.9,
+      94.9,
+      107.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      49.9,
+      89.9,
+      111.9,
+      139.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "Low",
+     "Moderate",
+     "High",
+     "Very High",
+     "Extreme"
+    ],
+    "window": "O1+F1+F2+F3",
+    "adjust": [
+     {
+      "var": "tmax",
+      "op": "<",
+      "value": 57,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 1
+   },
+   {
+    "type": "matrix",
+    "label": "Staffing level (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      24.9,
+      71.9,
+      94.9,
+      107.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      49.9,
+      89.9,
+      111.9,
+      139.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "tmax",
+      "op": "<",
+      "value": 57,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 2
+   },
+   {
+    "type": "matrix",
+    "label": "Response level (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      24.9,
+      71.9,
+      94.9,
+      107.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      49.9,
+      89.9,
+      111.9,
+      139.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "tmax",
+      "op": "<",
+      "value": 57,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 3
+   }
+  ],
+  "notes": "NoCo 2026 FDOP: SIG Great Divide, Cow Creek (WY), Hangman (fuel model Z), 2012-2022; large fire 50 ac, multi-fire day 2+. Adjective / preparedness O1+F1+F2+F3; staffing and response F1; ERC-Z x BI-Z matrix; one level lower when Tmax (F1) < 57 F. ERC-Z classes from the Decision Matrix tab 0-24.9 / 25-71.9 / 72-94.9 / 95-107.9 / 108+ (the BR analysis tab uses 25.0-74.9 / 75.0-94.9). Climatology 90th/97th: BI-Z 132/155, ERC-Z 102/114."
+ },
+ "NOCO-DD": {
+  "source": "Northern Colorado 2026 FDOP workbook v1.2 (2026-06-06), Fire Danger Decision Matrix and FDRA analysis tabs",
+  "stations": [
+   50207,
+   50304,
+   50305,
+   50408
+  ],
+  "fm": "Z",
+  "idx": "erc",
+  "season": [
+   "01-01",
+   "12-31"
+  ],
+  "calib": [
+   2012,
+   2022
+  ],
+  "breaks": {
+   "erc": [
+    34.9,
+    74.9,
+    90.9,
+    101.9
+   ],
+   "bi": [
+    34.9,
+    68.9,
+    84.9,
+    98.9
+   ]
+  },
+  "classes": [
+   "Low",
+   "Moderate",
+   "High",
+   "Very High",
+   "Extreme"
+  ],
+  "large": 5,
+  "mfd": 3,
+  "tools": [
+   {
+    "label": "Adjective rating & preparedness (ERC-Z)",
+    "idx": "erc",
+    "fm": "Z",
+    "breaks": [
+     34.9,
+     74.9,
+     90.9,
+     101.9
+    ],
+    "classes": [
+     "Low",
+     "Moderate",
+     "High",
+     "Very High",
+     "Extreme"
+    ],
+    "window": "O1+F1+F2+F3",
+    "order": 1
+   },
+   {
+    "label": "ERC-Z class (matrix rows)",
+    "idx": "erc",
+    "fm": "Z",
+    "breaks": [
+     34.9,
+     74.9,
+     90.9,
+     101.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 4
+   },
+   {
+    "label": "BI-Z class (matrix columns)",
+    "idx": "bi",
+    "fm": "Z",
+    "breaks": [
+     34.9,
+     68.9,
+     84.9,
+     98.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 5
+   }
+  ],
+  "matrix_tools": [
+   {
+    "type": "matrix",
+    "label": "Staffing level (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      34.9,
+      74.9,
+      90.9,
+      101.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      34.9,
+      68.9,
+      84.9,
+      98.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "order": 2
+   },
+   {
+    "type": "matrix",
+    "label": "Response level (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      34.9,
+      74.9,
+      90.9,
+      101.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      34.9,
+      68.9,
+      84.9,
+      98.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "order": 3
+   }
+  ],
+  "notes": "NoCo 2026 FDOP: SIG Dry Lake, Willow Creek, Independence Mountain, Keyser Ridge (fuel model Z), 2012-2022; large fire 5 ac, multi-fire day 3+. Adjective and preparedness on ERC-Z alone (4-day average O1+F1+F2+F3); staffing and response on the ERC-Z x BI-Z matrix (F1). No additional criteria. Climatology 90th/97th: BI-Z 85/99, ERC-Z 91/102."
+ },
+ "NOCO-FR": {
+  "source": "Northern Colorado 2026 FDOP workbook v1.2 (2026-06-06), Fire Danger Decision Matrix and FDRA analysis tabs",
+  "stations": [
+   50508,
+   53105,
+   50604
+  ],
+  "fm": "Z",
+  "idx": "erc",
+  "season": [
+   "01-01",
+   "12-31"
+  ],
+  "calib": [
+   2012,
+   2022
+  ],
+  "breaks": {
+   "erc": [
+    49.9,
+    73.9,
+    88.9,
+    99.9
+   ],
+   "bi": [
+    37.9,
+    64.9,
+    80.9,
+    94.9
+   ]
+  },
+  "classes": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5"
+  ],
+  "large": 5,
+  "mfd": 3,
+  "tools": [
+   {
+    "label": "ERC-Z class (matrix rows)",
+    "idx": "erc",
+    "fm": "Z",
+    "breaks": [
+     49.9,
+     73.9,
+     88.9,
+     99.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 4
+   },
+   {
+    "label": "BI-Z class (matrix columns)",
+    "idx": "bi",
+    "fm": "Z",
+    "breaks": [
+     37.9,
+     64.9,
+     80.9,
+     94.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 5
+   }
+  ],
+  "matrix_tools": [
+   {
+    "type": "matrix",
+    "label": "Adjective rating & preparedness (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      49.9,
+      73.9,
+      88.9,
+      99.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      37.9,
+      64.9,
+      80.9,
+      94.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "Low",
+     "Moderate",
+     "High",
+     "Very High",
+     "Extreme"
+    ],
+    "window": "O1+F1+F2+F3",
+    "adjust": [
+     {
+      "var": "f100",
+      "op": ">",
+      "value": 14,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 1
+   },
+   {
+    "type": "matrix",
+    "label": "Staffing level (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      49.9,
+      73.9,
+      88.9,
+      99.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      37.9,
+      64.9,
+      80.9,
+      94.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "f100",
+      "op": ">",
+      "value": 14,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 2
+   },
+   {
+    "type": "matrix",
+    "label": "Response level (ERC-Z × BI-Z matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "Z",
+     "breaks": [
+      49.9,
+      73.9,
+      88.9,
+      99.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "Z",
+     "breaks": [
+      37.9,
+      64.9,
+      80.9,
+      94.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "f100",
+      "op": ">",
+      "value": 14,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 3
+   }
+  ],
+  "notes": "NoCo 2026 FDOP: SIG Redstone, Carpenter Peak, Sugarloaf (fuel model Z), 2012-2022; large fire 5 ac, multi-fire day 3+. Adjective / preparedness O1+F1+F2+F3; staffing and response F1 (no more than 3 days of forecast); ERC-Z x BI-Z matrix; one level lower when the 100-hr fuel moisture (F1) > 14%. Climatology 90th/97th: BI-Z 86/95, ERC-Z 97/107."
+ },
+ "NOCO-JU": {
+  "source": "Northern Colorado 2026 FDOP workbook v1.2 (2026-06-06), Fire Danger Decision Matrix and FDRA analysis tabs",
+  "stations": [
+   50104,
+   50108,
+   51402,
+   51407
+  ],
+  "fm": "X",
+  "idx": "erc",
+  "season": [
+   "01-01",
+   "12-31"
+  ],
+  "calib": [
+   2012,
+   2022
+  ],
+  "breaks": {
+   "erc": [
+    39.9,
+    69.9,
+    83.9,
+    95.9
+   ],
+   "bi": [
+    99.9,
+    174.9,
+    219.9,
+    267.9
+   ]
+  },
+  "classes": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5"
+  ],
+  "large": 20,
+  "mfd": 8,
+  "tools": [
+   {
+    "label": "ERC-X class (matrix rows)",
+    "idx": "erc",
+    "fm": "X",
+    "breaks": [
+     39.9,
+     69.9,
+     83.9,
+     95.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 4
+   },
+   {
+    "label": "BI-X class (matrix columns)",
+    "idx": "bi",
+    "fm": "X",
+    "breaks": [
+     99.9,
+     174.9,
+     219.9,
+     267.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "order": 5
+   }
+  ],
+  "matrix_tools": [
+   {
+    "type": "matrix",
+    "label": "Adjective rating & preparedness (ERC-X × BI-X matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "X",
+     "breaks": [
+      39.9,
+      69.9,
+      83.9,
+      95.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "X",
+     "breaks": [
+      99.9,
+      174.9,
+      219.9,
+      267.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "Low",
+     "Moderate",
+     "High",
+     "Very High",
+     "Extreme"
+    ],
+    "window": "O1+F1+F2+F3",
+    "adjust": [
+     {
+      "var": "tmax",
+      "op": "<",
+      "value": 57,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 1
+   },
+   {
+    "type": "matrix",
+    "label": "Staffing level (ERC-X × BI-X matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "X",
+     "breaks": [
+      39.9,
+      69.9,
+      83.9,
+      95.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "X",
+     "breaks": [
+      99.9,
+      174.9,
+      219.9,
+      267.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "tmax",
+      "op": "<",
+      "value": 57,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 2
+   },
+   {
+    "type": "matrix",
+    "label": "Response level (ERC-X × BI-X matrix)",
+    "rows": {
+     "idx": "erc",
+     "fm": "X",
+     "breaks": [
+      39.9,
+      69.9,
+      83.9,
+      95.9
+     ]
+    },
+    "cols": {
+     "idx": "bi",
+     "fm": "X",
+     "breaks": [
+      99.9,
+      174.9,
+      219.9,
+      267.9
+     ]
+    },
+    "matrix": [
+     [
+      1,
+      1,
+      1,
+      2,
+      3
+     ],
+     [
+      1,
+      2,
+      2,
+      3,
+      3
+     ],
+     [
+      1,
+      2,
+      3,
+      3,
+      4
+     ],
+     [
+      2,
+      3,
+      3,
+      4,
+      4
+     ],
+     [
+      3,
+      3,
+      4,
+      4,
+      5
+     ]
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "tmax",
+      "op": "<",
+      "value": 57,
+      "adjust": -1,
+      "window": "F1"
+     }
+    ],
+    "order": 3
+   }
+  ],
+  "notes": "NoCo 2026 FDOP: SIG Lodore, Calico, Pinto, Dragon Road (fuel model X), 2012-2022; large fire 20 ac, multi-fire day 8+. Adjective / preparedness: 4-day average O1+F1+F2+F3; staffing and response: F1. ERC-X rows x BI-X columns 5x5 matrix; one level lower when Tmax (F1) < 57 F. ERC-X classes 0-39.9 / 40-69.9 / 70-83.9 / 84-95.9 / 96+ (the Decision Matrix tab lists High as 70-84.9, overlapping Very High 84-95.9; the analysis tab 70.0-83.9 is used). Climatology 90th/97th: BI-X 258/297, ERC-X 94/100."
+ },
+ "NOCO-PN": {
+  "source": "Northern Colorado 2026 FDOP workbook v1.2 (2026-06-06), Fire Danger Decision Matrix and FDRA analysis tabs",
+  "stations": [
+   50510,
+   50901,
+   52301
+  ],
+  "fm": "Z",
+  "idx": "bi",
+  "season": [
+   "01-01",
+   "12-31"
+  ],
+  "calib": [
+   2017,
+   2025
+  ],
+  "breaks": {
+   "bi": [
+    64.9,
+    86.9,
+    107.9,
+    137.9
+   ]
+  },
+  "classes": [
+   "Low",
+   "Moderate",
+   "High",
+   "Very High",
+   "Extreme"
+  ],
+  "large": 300,
+  "mfd": 10,
+  "tools": [
+   {
+    "label": "Adjective rating & preparedness (BI-Z)",
+    "idx": "bi",
+    "fm": "Z",
+    "breaks": [
+     64.9,
+     86.9,
+     107.9,
+     137.9
+    ],
+    "classes": [
+     "Low",
+     "Moderate",
+     "High",
+     "Very High",
+     "Extreme"
+    ],
+    "window": "O1+F1+F2+F3",
+    "adjust": [
+     {
+      "var": "gsi",
+      "op": ">",
+      "value": 0.3,
+      "adjust": -1
+     }
+    ],
+    "order": 1
+   },
+   {
+    "label": "Staffing level (BI-Z)",
+    "idx": "bi",
+    "fm": "Z",
+    "breaks": [
+     64.9,
+     86.9,
+     107.9,
+     137.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "gsi",
+      "op": ">",
+      "value": 0.3,
+      "adjust": -1
+     }
+    ],
+    "order": 2
+   },
+   {
+    "label": "Response level (BI-Z)",
+    "idx": "bi",
+    "fm": "Z",
+    "breaks": [
+     64.9,
+     86.9,
+     107.9,
+     137.9
+    ],
+    "classes": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "window": "F1",
+    "adjust": [
+     {
+      "var": "gsi",
+      "op": ">",
+      "value": 0.3,
+      "adjust": -1
+     }
+    ],
+    "order": 3
+   }
+  ],
+  "notes": "NoCo 2026 FDOP: SIG Buckeye, North Sterling, Arsenal (fuel model Z), 2017-2025; large fire 300 ac, multi-fire day 10+. BI-Z alone (1 x 5) for adjective, preparedness, staffing and response; one level lower when GSI > 0.3 (green-up). Adjective / preparedness on the 4-day average O1+F1+F2+F3; staffing and response on the single forecast day (F1), as the workbook calculates them (PN analysis tab, \"1-day only\"); the Decision Matrix tab lists O1+F3 for Plains staffing. Climatology 90th/97th: BI-Z 120/140."
+ }
+}
