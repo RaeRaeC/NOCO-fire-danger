@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# Streamlit — NEVER commit real credentials
+.streamlit/secrets.toml
+
+# Local credential files — NEVER commit
+.env
+*.env
+
+# Cached API data (optional — remove # to commit cache to repo)
+# gacc_data.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Data files (optional — remove this if you WANT to commit your Excel)
+# *.xlsx
+# *.xls
+
+# AGOL pipeline dry-run output
+agol_out/
+normals/fems_raw/
+normals/fdra/
+normals/output/ca_normals_*
+setup/inputs/_unzipped/

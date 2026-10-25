@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FDRA Season Tracking</title>
+<link rel="stylesheet" href="assets/site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script src="assets/area.js"></script>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<header class="top">
+  <h1 id="h-forest">Fire Danger Operating Plan</h1>
+  <div class="sub"><a href="index.html">◂ <span class="area-id">CA</span> FDRA map</a> · <span class="area-org">CA GACC Predictive Services</span></div>
+</header>
+<main>
+  <section class="panel" id="facts-panel">
+    <h2 id="h-fdra">Loading…</h2>
+    <div id="units" class="tabs"></div>
+    <div class="controls" style="margin:4px 0 8px"><label>Fuel model <select id="fm"></select></label>
+      <span class="muted small" id="fmnote"></span></div>
+    <details id="factsbox" open><summary class="small muted" style="cursor:pointer;margin-bottom:6px">FDRA details — fuel model, FDOP RAWS, breakpoints</summary>
+    <dl class="facts" id="facts"></dl></details>
+  </section>
+
+  <section class="panel" id="today-panel" style="display:none">
+    <h2>Today — fire danger and FDOP levels</h2>
+    <div id="today" class="today-box"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Season tracking</h2>
+    <div id="nonorm"></div>
+    <div class="tabs" id="ctabs"></div>
+    <div class="controls">
+      <span>Analog years</span><span id="analog" class="chips"></span>
+      <label>Window <select id="win"><option value="season">Apr 1 – Dec 31</option><option value="year">Full year</option><option value="recent">Last 60 days + forecast</option></select></label>
+      <span class="muted small">Click legend items to hide/show lines.</span>
+    </div>
+    <div id="chart" class="chart"></div>
+    <div id="cnote" class="note"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Dashboard</h2>
+    <p class="muted small" style="margin-top:0">FDRA (SIG) values are the daily mean of the FDOP stations below at the FDRA's fuel model.
+      O = observed (FEMS daily peak), F = FEMS forecast. Percentiles and SFDI are ranked against the FDRA's own 2016–2025 record.
+      Data currency: <span id="gen">–</span></p>
+    <div class="table-wrap"><table class="data" id="sig"></table></div>
+    <h3 class="small" style="margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em">Staffing / dispatch levels — tracking this year</h3>
+    <div class="table-wrap"><table class="data" id="track"></table></div>
+    <p class="note" id="tracknote"></p>
+    <h3 class="small" style="margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em">Breakpoints — FDOP vs. 90th / 97th percentile</h3>
+    <div class="table-wrap"><table class="data" id="bps"></table></div>
+    <p class="note" id="bpnote"></p>
+    <h3 class="small" style="margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em">Station NFDRS</h3>
+    <div class="table-wrap"><table class="data" id="stations"></table></div>
+    <p class="note">SFDI: Jolly, W.M.; Freeborn, P.H.; Page, W.G.; Butler, B.W. 2019. Severe Fire Danger Index: a forecastable metric
+      to inform firefighter and community wildfire risk management. <i>Fire</i> 2: 47.
+      <span id="pal-note"></span></p>
+  </section>
+</main>
+<script>
+const P = new URLSearchParams(location.search);
+const PAL_ORDER = ['A', 'B', 'C', 'D', 'Ev', 'E'];
+const COL = { max: '#e5534b', avg: '#9aa0a6', cur: '#ffffff', grid: '#43484e', text: '#e8eaed', bg: '#2a2d31' };
+const ANALOG_COL = ['#7fb3ff', '#ffd27f', '#b39ddb', '#80cbc4', '#f48fb1'];
+const LINE_COL = ['#ffffff', '#7fb3ff', '#ffd27f', '#80cbc4', '#b39ddb', '#f48fb1', '#bcaaa4', '#c5e1a5'];
+let S = {};   // state
+
+function doyDate(year, doy) { const d = new Date(Date.UTC(year, 0, 1)); d.setUTCDate(doy); return d.toISOString().slice(0, 10); }
+function doyAxis(year) { return Array.from({ length: 365 }, (_, i) => doyDate(year, i + 1)); }
+
+function layout(title, ytitle, extra = {}) {
+  const y = S.year, win = document.getElementById('win').value;
+  let range = [`${y}-04-01`, `${y}-12-31`];
+  if (win === 'year') range = [`${y}-01-01`, `${y}-12-31`];
+  if (win === 'recent') {
+    const t = new Date(); const a = new Date(t); a.setDate(a.getDate() - 60); const b = new Date(t); b.setDate(b.getDate() + 11);
+    range = [a.toISOString().slice(0, 10), b.toISOString().slice(0, 10)];
+  }
+  return Object.assign({
+    title: { text: title, font: { size: 15 } }, paper_bgcolor: COL.bg, plot_bgcolor: COL.bg,
+    font: { color: COL.text, size: 12 }, margin: { l: 58, r: 20, t: 40, b: 40 }, hovermode: 'x unified',
+    legend: { orientation: 'h', y: -0.12, bgcolor: 'rgba(0,0,0,0)' },
+    xaxis: { type: 'date', range, gridcolor: COL.grid, tickformat: '%b %d' },
+    yaxis: { title: ytitle, gridcolor: COL.grid, zeroline: false },
+    shapes: [{ type: 'line', xref: 'x', yref: 'paper', x0: S.today, x1: S.today, y0: 0, y1: 1, line: { color: '#777', width: 1, dash: 'dot' } }],
+    annotations: [],
+  }, extra);
+}
+function hline(y, label, color = '#8a9096') {
+  return {
+    shape: { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: y, y1: y, line: { color, width: 1, dash: 'dot' } },
+    ann: label ? { xref: 'paper', x: 1, xanchor: 'right', y, yanchor: 'bottom', text: label, showarrow: false, font: { size: 10, color } } : null,
+  };
+}
+function addLines(lay, lines) { lines.forEach(h => { lay.shapes.push(h.shape); if (h.ann) lay.annotations.push(h.ann); }); return lay; }
+
+// current-year O and F traces for one series key
+function curTraces(key, name, color = COL.cur, yaxis = 'y') {
+  const s = S.cur.series, xO = [], yO = [], xF = [], yF = [];
+  let lastO = null;
+  s.dates.forEach((d, i) => {
+    if (s[key][i] === null) return;
+    if (s.type[i] === 'O') { xO.push(d); yO.push(s[key][i]); lastO = [d, s[key][i]]; } else { xF.push(d); yF.push(s[key][i]); }
+  });
+  if (lastO && xF.length) { xF.unshift(lastO[0]); yF.unshift(lastO[1]); }
+  return [
+    { x: xO, y: yO, name: `${S.year} ${name}`, mode: 'lines+markers', yaxis, line: { color, width: 1.5 }, marker: { symbol: 'square-open', size: 4, color } },
+    { x: xF, y: yF, name: `${name} forecast`, mode: 'lines+markers', yaxis, line: { color, width: 1.5, dash: 'dot' }, marker: { symbol: 'square', size: 5, color } },
+  ];
+}
+function envTraces(key, name, kinds = ['max', 'avg'], yaxis = 'y', colors = {}) {
+  const env = S.norm && S.norm.envelope && S.norm.envelope[key];
+  if (!env) return [];
+  const x = doyAxis(S.year);
+  return kinds.filter(k => env[k]).map(k => ({
+    x, y: env[k], name: `${name} ${k} ${S.norm.years[0]}–${S.norm.years[S.norm.years.length - 1]}`, mode: 'lines', yaxis,
+    line: { color: colors[k] || (k === 'avg' ? COL.avg : COL.max), width: k === 'avg' ? 3 : 1.6, dash: k === 'min' ? 'solid' : undefined },
+    hovertemplate: '%{y:.0f}',
+  }));
+}
+function analogTraces(key) {
+  if (!S.norm) return [];
+  const sel = [...document.querySelectorAll('#analog button.on')].map(b => b.textContent);
+  const x = doyAxis(S.year);
+  return sel.filter(y => S.norm.years_series[y] && S.norm.years_series[y][key]).map((y, i) => ({
+    x, y: S.norm.years_series[y][key], name: y, mode: 'lines', line: { color: ANALOG_COL[i % ANALOG_COL.length], width: 1 }, hovertemplate: '%{y:.0f}',
+  }));
+}
+function normYears() { return S.norm ? `${S.norm.years[0]}–${S.norm.years[S.norm.years.length - 1]}` : 'the normal period'; }
+function q(arr, p) { return arr && arr.length === 101 ? arr[p] : null; }
+
+// FDOP decision tools for this FDRA at the chosen fuel model and index
+const BP_COL = ['#ffb74d', '#4dd0e1', '#ce93d8'];
+function fdopTools(idx) { return (S.tools || []).filter(t => t.idx === idx && t.fm === S.fm); }
+function toolLines(idx, asPct) {
+  const qs = S.norm && S.norm[idx + '_q'];
+  const out = [];
+  fdopTools(idx).forEach((t, k) => {
+    const c = BP_COL[k % BP_COL.length];
+    t.breaks.forEach((b, i) => {
+      const y = asPct ? (qs ? rankOf(qs, b) : null) : b;
+      if (y === null) return;
+      out.push(hline(y, i === t.breaks.length - 1 ? `FDOP ${short(t.label)} ${t.breaks.join('/')}` : '', c));
+    });
+  });
+  return out;
+}
+function short(l) { return (l || '').split(/[(—–;]/)[0].trim(); }
+function rankOf(qs, v) {          // percentile of value v in a 101-point quantile array
+  if (v <= qs[0]) return 0; if (v >= qs[100]) return 100;
+  for (let i = 1; i <= 100; i++) if (qs[i] >= v) { const a = qs[i - 1], b = qs[i]; return b > a ? i - 1 + (v - a) / (b - a) : i; }
+  return 100;
+}
+const CHARTS = {
+  'ERC %': () => pctChart('erc_p', 'ERC annual percentile', [hline(90, '90th'), hline(97, '97th'), ...toolLines('erc', true)]),
+  'BI %': () => pctChart('bi_p', 'BI annual percentile', [hline(90, '90th'), hline(97, '97th'), ...toolLines('bi', true)]),
+  'SFDI': () => pctChart('sfdi', 'Severe Fire Danger Index',
+    [hline(60, 'Low ≤ 60'), hline(80, 'Moderate ≤ 80'), hline(90, 'High ≤ 90'), hline(97, 'Very High ≤ 97 · Severe above')],
+    'SFDI = ERC percentile × BI percentile, re-ranked against the FDRA’s own record (Jolly et al. 2019). Classes: Low ≤ 60, Moderate ≤ 80, High ≤ 90, Very High ≤ 97, Severe above.'),
+  'ERC': () => rawChart('erc', 'Energy Release Component'),
+  'BI': () => rawChart('bi', 'Burning Index'),
+  ...(PAL_ON ? { 'PAL': palChart } : {}),
+  'LFM': lfmChart,
+  'TRH': trhChart,
+  'Season end': endChart,
+};
+
+function pctChart(key, title, lines, note = '') {
+  const tr = [...envTraces(key, '', ['max', 'avg']), ...analogTraces(key), ...curTraces(key, '')];
+  const lay = addLines(layout(`${title} (fuel model ${S.fm})`, 'annual percentile', {}), lines);
+  if (!note && lines.length > 2) note = 'Colored dotted lines: the FDOP breakpoints converted to percentiles of ' + normYears() + ' (where they sit against the 90th / 97th). ';
+  lay.yaxis.range = [0, 101];
+  draw(tr, lay, (note || '') + `Red: highest and gray: average value for each day of ${normYears()}; white: ${S.year} observed (solid) and forecast (dotted).`);
+}
+function rawChart(key, title) {
+  const tr = [...envTraces(key, key.toUpperCase(), ['max', 'avg']), ...analogTraces(key), ...curTraces(key, key.toUpperCase())];
+  const qs = S.norm && S.norm[key + '_q'];
+  const lines = qs ? [hline(q(qs, 90), `90th ${fmt(q(qs, 90))}`), hline(q(qs, 97), `97th ${fmt(q(qs, 97))}`)] : [];
+  const tl = toolLines(key, false);
+  draw(tr, addLines(layout(`${title} (fuel model ${S.fm})`, key.toUpperCase()), [...lines, ...tl]),
+    `Gray dotted lines: 90th / 97th percentile of all ${normYears()} days.` +
+    (tl.length ? ' Colored dotted lines: the FDOP breakpoints for this index and fuel model.' : (S.tools && S.tools.length ? ` The FDOP breakpoints are for ${[...new Set(S.tools.map(t => t.idx.toUpperCase() + '-' + t.fm))].join(', ')} — switch the chart or fuel model to see them.` : '')));
+}
+function palChart() {
+  const pal = (S.cur.pal || []).filter(s => s.dates.length);
+  if (!pal.length) { draw([], layout('Project Activity Level', ''), 'No PAL stations inside this FDRA in the ' + ((AREA.pal && AREA.pal.label) || 'PAL report') + '.'); return; }
+  const tr = [];
+  pal.forEach((s, i) => {
+    const c = LINE_COL[i % LINE_COL.length], vis = s.forest_pal_station ? true : 'legendonly';
+    const xo = [], yo = [], xf = [], yf = [];
+    s.dates.forEach((d, j) => {
+      const v = PAL_ORDER.indexOf(s.pal[j]) + 1; if (!v) return;
+      if (s.type[j] === 'O') { xo.push(d); yo.push(v); } else { xf.push(d); yf.push(v); }
+    });
+    if (xo.length && xf.length) { xf.unshift(xo[xo.length - 1]); yf.unshift(yo[yo.length - 1]); }
+    const ht = '%{text}';
+    tr.push({ x: xo, y: yo, text: yo.map(v => PAL_ORDER[v - 1]), hovertemplate: ht, name: s.name, legendgroup: s.name, visible: vis,
+      mode: 'lines+markers', line: { color: c, width: 2, shape: 'hv' }, marker: { size: 5, color: c } });
+    tr.push({ x: xf, y: yf, text: yf.map(v => PAL_ORDER[v - 1]), hovertemplate: ht, name: s.name + ' fcst', legendgroup: s.name, visible: vis,
+      showlegend: false, mode: 'lines+markers', line: { color: c, width: 2, dash: 'dot', shape: 'hv' }, marker: { size: 5, color: c, symbol: 'circle-open' } });
+  });
+  const lay = layout('Project Activity Level by station', 'PAL');
+  lay.yaxis = { ...lay.yaxis, range: [0.5, 6.5], tickvals: [1, 2, 3, 4, 5, 6], ticktext: PAL_ORDER };
+  const all = pal.flatMap(s => s.dates).sort();
+  if (document.getElementById('win').value !== 'year' && all.length) {
+    const a = new Date(all[0]), b = new Date(all[all.length - 1]);
+    a.setDate(a.getDate() - 60 > 0 ? a.getDate() - 2 : a.getDate() - 2); b.setDate(b.getDate() + 2);
+    const lo = new Date(Math.min(a, new Date(Date.now() - 60 * 864e5)));
+    lay.xaxis.range = [(new Date(Math.max(lo, a))).toISOString().slice(0, 10), b.toISOString().slice(0, 10)];
+  }
+  draw(tr, lay, 'One line per RAWS inside the FDRA (forest PAL stations shown; others in the legend). Daily peak ERC/IC PAL from the ' + ((AREA.pal && AREA.pal.label) || 'PAL report') + ' — ' +
+    'solid observed, dotted forecast. History is kept from the first day the feed ran.');
+}
+function lfmChart() {
+  const tr = [
+    ...envTraces('herb', 'Herb', ['avg', 'min'], 'y', { avg: '#6f8f72', min: '#4caf50' }),
+    ...envTraces('woody', 'Woody', ['avg', 'min'], 'y', { avg: '#8d7f78', min: '#a1887f' }),
+    ...curTraces('herb', 'Herb', '#a5d6a7'), ...curTraces('woody', 'Woody', '#d7ccc8'),
+  ];
+  draw(tr, layout('Live fuel moisture (NFDRS herbaceous & woody)', 'percent'), `Average and lowest value for each day of ${normYears()} vs. ${S.year}.`);
+}
+function trhChart() {
+  const tr = [
+    ...envTraces('tmax', 'Max temp', ['max', 'avg'], 'y'), ...curTraces('tmax', 'Max temp', '#ffab91', 'y'),
+    ...envTraces('rhmin', 'Min RH', ['min', 'avg'], 'y2', { avg: '#7f9fbf', min: '#4fc3f7' }), ...curTraces('rhmin', 'Min RH', '#81d4fa', 'y2'),
+  ];
+  const lay = layout('Temperature and relative humidity', '');
+  lay.yaxis = { ...lay.yaxis, domain: [0.54, 1], title: 'max temp °F' };
+  lay.yaxis2 = { domain: [0, 0.46], title: 'min RH %', gridcolor: COL.grid, zeroline: false };
+  lay.xaxis.anchor = 'y2';
+  draw(tr, lay, 'FDOP-station average of daily max temperature and min RH (FEMS daily weather summary).');
+}
+function endChart() {
+  const tr = [...envTraces('erc_p', 'ERC %', ['avg']), ...analogTraces('erc_p'), ...curTraces('erc_p', 'ERC %')];
+  const lay = addLines(layout('Fire season end — ERC percentile vs. 70th', 'ERC annual percentile'), [hline(70, '70th percentile')]);
+  lay.yaxis.range = [0, 101];
+  const qd = (S.norm && S.norm.season_end_quantiles) || {};
+  const lab = { 25: '25%', 50: 'median', 75: '75%', 90: '90%' };
+  Object.entries(qd).forEach(([p, d], k) => {
+    const x = doyDate(S.year, d);
+    lay.shapes.push({ type: 'line', xref: 'x', yref: 'paper', x0: x, x1: x, y0: 0, y1: 1, line: { color: '#ffd27f', width: 1, dash: p === '50' ? 'dash' : 'dot' } });
+    lay.annotations.push({ x, xref: 'x', xanchor: 'left', y: 0.98 - k * 0.06, yref: 'paper', text: ` ${lab[p]} ${x.slice(5)}`, showarrow: false,
+      bgcolor: 'rgba(42,45,49,.85)', font: { size: 10, color: '#ffd27f' } });
+  });
+  const ends = (S.norm && S.norm.season_end_doy) || {};
+  const list = Object.entries(ends).map(([y, d]) => `${y}: ${d ? doyDate(S.year, d).slice(5) : 'no end'}`).join(' · ');
+  draw(tr, lay, 'Season end = first day from July 1 after which ERC stays below the 70th percentile for the rest of the year. Gold lines: ' +
+    `the date by which 25 / 50 / 75 / 90 % of ${normYears()} seasons had ended. ` + (list ? 'By year — ' + list : ''));
+}
+function draw(traces, lay, note) {
+  Plotly.react('chart', traces, lay, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+  document.getElementById('cnote').textContent = note || '';
+}
+function show(name) {
+  S.chart = name;
+  document.querySelectorAll('#ctabs button').forEach(b => b.classList.toggle('on', b.textContent === name));
+  CHARTS[name]();
+  try { localStorage.setItem('fdra_chart', name); } catch (e) {}
+}
+
+const LVL_COL = ['#2e7d32', '#7cb342', '#fbc02d', '#fb8c00', '#e53935', '#8e24aa'];
+function lvlOf(t, v) { if (v === null || v === undefined) return null; let c = 0; t.breaks.forEach((b, i) => { if (v > b) c = i + 1; }); return c; }   // breakpoint = top of its class
+function lvlName(t, c) { return (t.classes && t.classes[c]) || String(c + 1); }
+function lvlBadge(t, c) {
+  if (c === null) return '–';
+  const k = Math.round(c * (LVL_COL.length - 2) / Math.max(1, t.breaks.length)) + (c === t.breaks.length && t.breaks.length >= 4 ? 1 : 0);
+  return `<span class="badge" style="background:${LVL_COL[Math.min(k, LVL_COL.length - 1)]}">${esc(lvlName(t, c))}</span>`;
+}
+function trackTable() {
+  const tl = fdopTools('erc').concat(fdopTools('bi'), fdopTools('ic')), s = S.cur.series;
+  if (!tl.length) {
+    document.getElementById('track').innerHTML = '';
+    document.getElementById('tracknote').innerHTML = S.tools && S.tools.length ?
+      `The FDOP levels are set on ${[...new Set(S.tools.map(t => t.idx.toUpperCase() + '-' + t.fm))].join(', ')} — choose fuel model ${esc(S.tools[0].fm)} above to track them.` :
+      'No FDOP staffing / dispatch breakpoints are loaded for this FDRA yet.';
+    return;
+  }
+  const iO = s.dates.map((d, i) => i).filter(i => s.type[i] === 'O' && s[tl[0].idx][i] !== null);
+  const last = iO[iO.length - 1];
+  const iF = s.dates.map((d, i) => i).filter(i => s.type[i] === 'F' && s.dates[i] > (s.dates[last] || ''));
+  const doyOf = d => { const t = new Date(d + 'T00:00:00Z'); return Math.min(365, Math.floor((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5) + 1); };
+  const lastDoy = last !== undefined ? doyOf(s.dates[last]) : 0;
+  const head = `<thead><tr><th class="l">Decision tool</th><th>Index</th><th>Today (${last !== undefined ? s.dates[last].slice(5) : '–'})</th><th class="l">Forecast</th>
+    <th class="l">Days at each level, Jan 1 – ${last !== undefined ? s.dates[last].slice(5) : '–'}: ${S.year} vs. ${normYears()} average</th></tr></thead>`;
+  const body = tl.map(t => {
+    const v = s[t.idx], nL = t.breaks.length + 1;
+    const now = last !== undefined ? lvlOf(t, v[last]) : null;
+    const fc = iF.map(i => `<span title="${s.dates[i]} ${t.idx.toUpperCase()} ${fmt(v[i])}">${lvlBadge(t, lvlOf(t, v[i]))}</span>`).join(' ');
+    const ytd = Array(nL).fill(0); iO.forEach(i => { const c = lvlOf(t, v[i]); if (c !== null) ytd[c]++; });
+    let norm = null;
+    if (S.norm && S.norm.years_series) {
+      const ys = Object.values(S.norm.years_series).map(y => y[t.idx]).filter(Boolean);
+      if (ys.length) {
+        norm = Array(nL).fill(0);
+        ys.forEach(a => a.slice(0, lastDoy).forEach(x => { const c = lvlOf(t, x); if (c !== null) norm[c]++; }));
+        norm = norm.map(x => x / ys.length);
+      }
+    }
+    const cells = Array.from({ length: nL }, (_, c) => `<span style="display:inline-block;margin-right:8px">${lvlBadge(t, c)} <b>${ytd[c]}</b>${norm ? ` <span class="muted">/ ${Math.round(norm[c])}</span>` : ''}</span>`).join('');
+    return `<tr><td class="l">${esc(t.label)}</td><td>${t.idx.toUpperCase()}-${t.fm}<br><span class="muted small">${t.breaks.join(' / ')}</span></td>
+      <td>${lvlBadge(t, now)}<br><span class="muted small">${t.idx.toUpperCase()} ${last !== undefined ? fmt(v[last]) : '–'}</span></td><td class="l">${fc || '–'}</td><td class="l">${cells}</td></tr>`;
+  }).join('');
+  document.getElementById('track').innerHTML = head + '<tbody>' + body + '</tbody>';
+  document.getElementById('tracknote').innerHTML = `Level = the FDRA's daily ${S.year} value (mean of the FDOP stations, fuel model ${esc(S.fm)}) against the FDOP breakpoints. ` +
+    `Days: this year's observed days at each level, then (gray) the average number of days at that level over the same Jan 1 – today window in ${normYears()}. ` +
+    `Forecast badges: FEMS forecast days (hover for the value).`;
+}
+function tables() {
+  const s = S.cur.series, n = s.dates.length;
+  const iO = s.dates.map((d, i) => i).filter(i => s.type[i] === 'O').slice(-3);
+  const iF = s.dates.map((d, i) => i).filter(i => s.type[i] === 'F' && s.dates[i] >= S.today).slice(0, 8);
+  const row = (i, sep) => {
+    const c = sfdiClass(s.sfdi[i]);
+    return `<tr class="${s.type[i] === 'F' ? 'fc' : ''}${sep ? ' sep' : ''}"><td class="l">${s.dates[i]}</td><td>${s.type[i]}</td>
+      <td>${fmt(s.erc[i])}</td><td>${fmt(s.bi[i])}</td><td>${ord(s.erc_p[i])}</td><td>${ord(s.bi_p[i])}</td>
+      <td>${c ? `<span class="badge" style="background:${c.color}">${fmt(s.sfdi[i])} ${c.label}</span>` : '–'}</td>
+      <td>${fmt(s.fm100[i], 1)}</td><td>${fmt(s.fm1000[i], 1)}</td><td>${fmt(s.herb[i])}</td><td>${fmt(s.woody[i])}</td>
+      <td>${fmt(s.tmax[i])}</td><td>${fmt(s.rhmin[i])}</td><td>${s.n[i] ?? '–'}</td></tr>`;
+  };
+  document.getElementById('sig').innerHTML = `<thead><tr><th class="l">Date</th><th>Type</th><th>ERC</th><th>BI</th><th>ERC %</th><th>BI %</th>
+    <th>SFDI</th><th>100-hr</th><th>1000-hr</th><th>Herb</th><th>Woody</th><th>Max T</th><th>Min RH</th><th>Stns</th></tr></thead>
+    <tbody>${iO.reverse().map(i => row(i)).join('')}${iF.map((i, k) => row(i, k === 0)).join('')}</tbody>`;
+  const st = S.cur.station_table.slice().sort((a, b) => a.name.localeCompare(b.name) || a.type.localeCompare(b.type) * -1);
+  document.getElementById('stations').innerHTML = `<thead><tr><th class="l">Date</th><th>Type</th><th>ID</th><th class="l">Name</th><th>FM</th>
+    <th>1-hr</th><th>10-hr</th><th>100-hr</th><th>1000-hr</th><th>Herb</th><th>Woody</th><th>KBDI</th><th>IC</th><th>ERC</th><th>SC</th><th>BI</th></tr></thead>
+    <tbody>${st.map(r => `<tr class="${r.type === 'F' ? 'fc' : ''}"><td class="l">${r.date}</td><td>${r.type}</td><td>${r.stationId}</td><td class="l">${esc(r.name)}</td>
+    <td>${r.fm}</td><td>${fmt(r.fm1, 1)}</td><td>${fmt(r.fm10, 1)}</td><td>${fmt(r.fm100, 1)}</td><td>${fmt(r.fm1000, 1)}</td><td>${fmt(r.herb)}</td>
+    <td>${fmt(r.woody)}</td><td>${fmt(r.kbdi)}</td><td>${fmt(r.ic)}</td><td>${fmt(r.erc)}</td><td>${fmt(r.sc)}</td><td>${fmt(r.bi)}</td></tr>`).join('')}</tbody>`;
+}
+
+function fmFiles(unit) { return (S.row.fm_files && S.row.fm_files[unit]) || {}; }
+async function normFor(unit, fm) {
+  const f = fmFiles(unit)[fm];
+  const path = f ? f.norm : (S.row.normals[unit]);
+  if (!path) return null;
+  S.ncache = S.ncache || {};
+  if (!(path in S.ncache)) S.ncache[path] = await getJSON(path).catch(() => null);
+  return S.ncache[path];
+}
+async function bpTable() {
+  const tools = S.tools || [];
+  const want = [...tools.map(t => ({ ...t })), ...['erc', 'bi'].filter(i => !tools.some(t => t.idx === i && t.fm === S.fm))
+    .map(i => ({ idx: i, fm: S.fm, label: '(no FDOP breakpoints for this index / fuel model)', breaks: [] }))];
+  const rows = await Promise.all(want.map(async t => {
+    const n = await normFor(S.unit, t.fm), qs = n && n[t.idx + '_q'];
+    const p90 = qs ? q(qs, 90) : null, p97 = qs ? q(qs, 97) : null;
+    const pr = qs ? t.breaks.map(b => Math.round(rankOf(qs, b))) : [];
+    return `<tr><td class="l">${esc(t.label)}</td><td>${t.idx.toUpperCase()}-${t.fm}</td>
+      <td><b>${t.breaks.length ? t.breaks.join(' / ') : '–'}</b></td><td>${pr.length ? pr.map(ord).join(' / ') : '–'}</td>
+      <td>${p90 === null ? '–' : fmt(p90)}</td><td>${p97 === null ? '–' : fmt(p97)}</td>
+      <td class="l small">${t.breaks.length && p90 !== null ? `top break ${t.breaks[t.breaks.length - 1]} ${t.breaks[t.breaks.length - 1] >= p97 ? '≥ 97th' : t.breaks[t.breaks.length - 1] >= p90 ? 'between 90th and 97th' : '< 90th'}` : ''}</td></tr>`;
+  }));
+  document.getElementById('bps').innerHTML = `<thead><tr><th class="l">Decision tool</th><th>Index</th><th>FDOP breakpoints</th>
+    <th>as percentiles</th><th>90th</th><th>97th</th><th class="l"></th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  document.getElementById('bpnote').innerHTML = (S.fdop ? `FDOP breakpoints from ${esc(S.fdop.source || 'the current FDOP')}. ` :
+    'No FDOP breakpoints loaded for this FDRA yet — 90th / 97th percentiles shown. ') +
+    `Percentiles are of all ${normYears()} days at the FDRA's FDOP stations for each fuel model. ` +
+    `<a href="fdop.html?id=${encodeURIComponent(S.poly.fdra_id)}">Validate or adjust them in the FDOP Workbench ▸</a>`;
+}
+
+async function loadUnit(unit, fm) {
+  S.unit = unit;
+  const row = S.row, ff = fmFiles(unit);
+  S.fm = fm && ff[fm] ? fm : (fm && !Object.keys(ff).length ? fm : null);
+  const f = S.fm && ff[S.fm] ? ff[S.fm] : null;
+  [S.cur, S.norm] = await Promise.all([
+    getJSON(f ? f.cur : row.files[unit]),
+    f ? (f.norm ? getJSON(f.norm).catch(() => null) : Promise.resolve(null))
+      : (row.normals[unit] ? getJSON(row.normals[unit]).catch(() => null) : Promise.resolve(null)),
+  ]);
+  S.fm = S.cur.fm || (S.cur.stations[0] && S.cur.stations[0].fm) || S.poly.fuel_model;
+  const dfm = S.cur.fdop_fm || S.fm;
+  const sel = document.getElementById('fm');
+  const opts = Object.keys(ff).length ? Object.keys(ff) : [S.fm];
+  sel.innerHTML = opts.map(k => `<option value="${k}"${k === S.fm ? ' selected' : ''}>${k}${k === dfm ? ' (FDOP)' : ''}</option>`).join('');
+  sel.onchange = () => loadUnit(S.unit, sel.value);
+  document.getElementById('fmnote').textContent = Object.keys(ff).length > 1 ? 'All five NFDRS 2016 fuel models at the same FDOP stations.' :
+    'Other fuel models appear after the next data run.';
+  S.year = Number(S.cur.series.dates[0].slice(0, 4));
+  document.getElementById('gen').textContent = S.cur.generated;
+  document.querySelectorAll('#units button').forEach(b => b.classList.toggle('on', b.dataset.u === unit));
+  const p = S.poly;
+  const stn = S.cur.stations.map(s => `${esc(s.name || '?')} (${s.stationId})`).join(', ');
+  const facts = [
+    ['Fuel model', `${esc(S.fm)}${S.fm !== dfm ? ` (FDOP fuel model is ${esc(dfm)})` : ''}`],
+    ['FDOP RAWS', stn],
+    ['Historic data years', S.norm ? `${S.norm.years[0]}–${S.norm.years[S.norm.years.length - 1]} (${S.norm.n_days} days)` : 'not built yet'],
+    ['Staffing / dispatch index', esc(p.sl_dl_index || '–')],
+    ['Breakpoints', (S.tools && S.tools.length ? S.tools.map(t => `${esc(short(t.label))}: <b>${t.idx.toUpperCase()}-${t.fm} ${t.breaks.join(' / ')}</b>`).join('<br>') : 'none in the FDOP file') +
+      (S.norm ? `<br><span class="muted">90th / 97th (${normYears()}, FM ${esc(S.fm)}): ERC ${fmt(q(S.norm.erc_q, 90))} / ${fmt(q(S.norm.erc_q, 97))} · BI ${fmt(q(S.norm.bi_q, 90))} / ${fmt(q(S.norm.bi_q, 97))}</span>` : '')],
+  ];
+  if (S.cur.season) facts.splice(1, 0, ['Season', esc(S.cur.season) + (S.cur.season === 'peak' ? ' (May 1 – Nov 15)' : ' (Nov 16 – Apr 30)')]);
+  facts.push(['FDOP', `<a href="fdop.html?id=${encodeURIComponent(p.fdra_id)}&unit=${encodeURIComponent(unit)}${P.get('embed') === '1' ? '&embed=1' : ''}">Open the FDOP Workbench ▸</a> (validate indices, decision points, yearly recalibration check)`]);
+  document.getElementById('facts').innerHTML = facts.map(([k, v]) => `<dt>${k}:</dt><dd>${v}</dd>`).join('');
+  document.getElementById('nonorm').innerHTML = S.norm ? '' :
+    '<div class="warn">The 2016–2025 normals for this FDRA are not built yet, so percentiles, SFDI and the max/average lines are missing. They fill in after the normals job runs.</div>';
+  const an = document.getElementById('analog');
+  const keep = new Set([...an.querySelectorAll('button.on')].map(b => b.textContent));
+  an.innerHTML = (S.norm ? S.norm.years.slice().reverse() : []).map(y => `<button class="${keep.has(String(y)) ? 'on' : ''}">${y}</button>`).join('') ||
+    '<span class="muted small">none yet</span>';
+  an.querySelectorAll('button').forEach(b => b.onclick = () => { b.classList.toggle('on'); show(S.chart); });
+  tables();
+  show(S.chart);
+  trackTable();
+  bpTable();
+}
+
+(async function main() {
+  const id = (P.get('id') || '').trim();
+  if (P.get('embed') === '1') document.getElementById('factsbox').removeAttribute('open');
+  const t = new Date(); S.today = new Date(t.getTime() - t.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  try { S.chart = localStorage.getItem('fdra_chart') || 'ERC %'; } catch (e) { S.chart = 'ERC %'; }
+  if (!CHARTS[S.chart]) S.chart = 'ERC %';
+  getJSON('popups.json').then(pp => {        // same summary as the map popup (built twice a day)
+    const h = pp.fdras && (pp.fdras[id] || Object.entries(pp.fdras).find(([k]) => k.toUpperCase() === id.replace(/\s*\((?:peak|non-peak)\)$/, '').toUpperCase())?.[1]);
+    if (h) { document.getElementById('today').innerHTML = h; document.getElementById('today-panel').style.display = ''; }
+  }).catch(() => {});
+  const [polys, idx, start] = await Promise.all([fetch('data/fdras.geojson').then(r => r.json()), getJSON('fdras.json'),
+    fetch(DATA + 'fdop_start.json?t=' + Math.floor(Date.now() / 6e5)).then(r => { if (!r.ok) throw 0; return r.json(); }).catch(() => fetch('data/fdop_start.json').then(r => r.json())).catch(() => ({}))]);
+  const base = id.replace(/\s*\((?:peak|non-peak)\)$/, '').toUpperCase();
+  S.poly = (polys.features.find(f => f.properties.fdra_id.toUpperCase() === base) || {}).properties;
+  S.row = idx.fdras.find(r => r.fdra_id.toUpperCase() === base);
+  S.fdop = Object.entries(start).find(([k]) => k.toUpperCase() === base)?.[1] || null;
+  S.tools = S.fdop ? (S.fdop.tools && S.fdop.tools.length ? S.fdop.tools :
+    Object.entries(S.fdop.breaks || {}).map(([i, b]) => ({ idx: i, fm: S.fdop.fm || 'Y', breaks: b, label: 'FDOP ' + i.toUpperCase() + ' breakpoints' }))) : [];
+  if (!S.poly || !S.row || !S.row.units.length) {
+    document.getElementById('h-fdra').textContent = id ? `No data for FDRA “${id}”` : 'No FDRA chosen';
+    document.getElementById('facts').innerHTML = '<dd><a href="index.html">Pick an FDRA on the map</a></dd>';
+    return;
+  }
+  document.title = `${S.poly.fdra_id} — FDRA Season Tracking`;
+  document.getElementById('h-forest').textContent = S.poly.forest + ' Fire Danger Operating Plan';
+  document.getElementById('h-fdra').textContent = `${S.poly.fdra_name} Fire Danger Rating Area (${S.poly.fdra_id})`;
+  const ub = document.getElementById('units');
+  if (S.row.units.length > 1) {
+    ub.innerHTML = S.row.units.map(u => `<button data-u="${esc(u)}">${esc(u)}</button>`).join('');
+    ub.querySelectorAll('button').forEach(b => b.onclick = () => loadUnit(b.dataset.u, S.fm));
+  }
+  document.getElementById('ctabs').innerHTML = Object.keys(CHARTS).map(k => `<button>${k}</button>`).join('');
+  document.querySelectorAll('#ctabs button').forEach(b => b.onclick = () => show(b.textContent));
+  document.getElementById('win').onchange = () => show(S.chart);
+  const want = P.get('unit');
+  await loadUnit(want && S.row.units.includes(want) ? want : (S.row.active_unit || S.row.units[0]), P.get('fm'));
+})().catch(e => {
+  document.getElementById('h-fdra').textContent = 'Could not load data';
+  document.getElementById('facts').innerHTML = `<dd class="muted">${esc(e.message)}</dd>`;
+});
+document.getElementById('pal-note') && (document.getElementById('pal-note').innerHTML = palLink());
+</script>
+</body>
+</html>
